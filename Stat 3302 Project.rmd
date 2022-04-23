@@ -1,0 +1,97 @@
+---
+title: "Stat 3302 Project"
+author: "Yoojin Jeong"
+date: "4/6/2022"
+output: pdf_document
+---
+
+Loading the dataset in R
+```{r}
+library(readr)
+diamonds <- read_csv("diamonds.csv")
+View(diamonds)
+```
+
+
+Linear regression for price and carat size
+```{r}
+diamonds.lm = lm(price ~ carat, data = diamonds)
+plot(diamonds$carat, diamonds$price, xlab = "Carat Size", ylab = "Price ($)")
+abline(reg = diamonds.lm)
+
+#Summary statistics
+summary(diamonds.lm)
+```
+
+
+From the above linear regression and plot, it appears that fitting price and carat size to a linear regression model will not work.
+
+
+
+Taking Log Predictor and Response to fit model into linear regression- INCLUDE IN REPORT
+```{r}
+#Log Predictor
+plot(log(diamonds$carat), diamonds$price, xlab = "Carat Size", ylab = "Price ($)")
+abline(reg = diamonds.lm)
+#Log Response
+plot(diamonds$carat, log(diamonds$price), xlab = "Carat Size", ylab = "Price ($)")
+abline(reg = diamonds.lm)
+
+#Log Predictor AND Log Response
+diamonds.lm.log = lm(log(price) ~ log(carat), data = diamonds) 
+
+plot(log(diamonds$carat), log(diamonds$price), xlab = "Carat Size", ylab = "Price ($)", main = "Price vs Carat Size")
+abline(reg = diamonds.lm.log, col = "red")
+summary(diamonds.lm.log)
+```
+
+
+Analysis: 
+
+
+Cut as Factor Variable
+```{r}
+model.fac <- glm(price ~ carat + as.factor(cut), data = diamonds)
+#Cut "Fair' is baseline
+summary(model.fac)
+
+
+diamonds.df <- data.frame(diamonds, stringsAsFactors = TRUE)
+model.fac2 <- glm(price ~ carat + as.factor(cut) + diamonds$color, data = diamonds)
+summary(model.fac2)
+```
+
+
+
+Multivariate multiple regression.
+```{r}
+multi.reg <- lm(price ~ carat + depth, data = diamonds)
+summary(multi.reg)
+
+multi.reg2 <- lm(price ~ carat + depth + table, data = diamonds)
+summary(multi.reg2)
+
+anova(multi.reg, multi.reg2)
+```
+
+Proportional Odds Model Regression
+```{r}
+library(MASS)
+hist(diamonds$price)
+plot(diamonds$carat,diamonds$price)
+
+diamonds$pricerange="0-4999"
+for (i in length(diamonds$price)) {
+  if(diamonds$price[i]>4999) diamonds$pricerange[i]="5000-9999"
+}
+for (i in length(diamonds$price)) {
+  if(diamonds$price[i]>9999) diamonds$pricerange[i]="10000-14999"
+}
+for (i in length(diamonds$price)) {
+  if(diamonds$price[i]>14999) diamonds$pricerange[i]="15000+"
+}
+diamonds$pricerange=cut(diamonds$price, breaks = c(0,5000,10000,15000,20000), labels = c("0-4999", "5000-9999", "10000-14999", "15000+"))
+diamonds$pricerangef=factor(diamonds$pricerange, levels = c("0-4999", "5000-9999", "10000-14999", "15000+"))
+summary(polr(diamonds$pricerangef~diamonds$carat))
+```
+
